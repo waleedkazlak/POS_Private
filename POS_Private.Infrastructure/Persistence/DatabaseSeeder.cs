@@ -680,10 +680,15 @@ public static class DatabaseSeeder
 
             // Seed Initial Stock across Branches
             var branches = await context.Branches.ToListAsync();
+            var inventories = await context.Inventories.ToListAsync();
             var adminUser = await context.Users.FirstAsync();
 
             foreach (var b in branches)
             {
+                var branchInventory = inventories.FirstOrDefault(i => i.BranchId == b.Id && i.IsDefault)
+                    ?? inventories.FirstOrDefault(i => i.BranchId == b.Id)
+                    ?? inventories.First();
+
                 foreach (var p in products)
                 {
                     if (p.Variants.Any())
@@ -692,6 +697,7 @@ public static class DatabaseSeeder
                         {
                             var stock = new BranchStock
                             {
+                                InventoryId = branchInventory.Id,
                                 BranchId = b.Id,
                                 ProductId = p.Id,
                                 VariantId = v.Id,
@@ -702,6 +708,7 @@ public static class DatabaseSeeder
 
                             context.StockMovements.Add(new StockMovement
                             {
+                                InventoryId = branchInventory.Id,
                                 BranchId = b.Id,
                                 ProductId = p.Id,
                                 VariantId = v.Id,
@@ -1024,6 +1031,7 @@ public static class DatabaseSeeder
             };
 
             context.VendorBills.Add(bill);
+            await context.SaveChangesAsync();
 
             // Update vendor balance: credit bill
             vendorCotton.CurrentBalance += billTotal;

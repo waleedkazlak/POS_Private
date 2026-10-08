@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+using System.Reflection;
 using System.Text;
 using POS_Private.Application;
 using POS_Private.Application.DTOs;
@@ -11,6 +11,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -43,7 +45,7 @@ builder.Services.AddApplication();
 builder.Services.AddSingleton(jwtSettings);
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
-    ?? "Server=(localdb)\\mssqllocaldb;Database=POS_Private;Trusted_Connection=True;MultipleActiveResultSets=true;TrustServerCertificate=True";
+    ?? "Host=localhost;Port=5432;Database=pos_private;Username=postgres;Password=postgres";
 
 builder.Services.AddInfrastructure(connectionString);
 
@@ -183,7 +185,7 @@ try
 {
     using var scope = app.Services.CreateScope();
     var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-    logger.LogInformation("Checking database initialization and migrations...");
+    logger.LogInformation("Connecting to PostgreSQL and running migrations...");
 
     var context = scope.ServiceProvider.GetRequiredService<POS_PrivateDbContext>();
     await context.Database.MigrateAsync();
@@ -195,8 +197,8 @@ try
 catch (Exception ex)
 {
     var logger = app.Services.GetRequiredService<ILogger<Program>>();
-    logger.LogError(ex, "An error occurred during database initialization / migration.");
-    // In dev, let it continue or throw if needed
+    logger.LogCritical(ex, "FATAL: Database migration failed. Please verify PostgreSQL connection string, credentials, and server status in appsettings.json.");
+    throw;
 }
 
 app.UseHttpsRedirection();

@@ -4,6 +4,7 @@ using POS_Private.Infrastructure.Persistence;
 using POS_Private.Infrastructure.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace POS_Private.Infrastructure;
@@ -14,11 +15,12 @@ public static class InfrastructureServiceCollectionExtensions
     {
         services.AddDbContext<POS_PrivateDbContext>(options =>
         {
-            options.UseSqlServer(connectionString, sqlOptions =>
+            options.UseNpgsql(connectionString, npgsqlOptions =>
             {
-                sqlOptions.MigrationsAssembly(typeof(POS_PrivateDbContext).Assembly.FullName);
-                sqlOptions.EnableRetryOnFailure(maxRetryCount: 3, maxRetryDelay: TimeSpan.FromSeconds(5), errorNumbersToAdd: null);
+                npgsqlOptions.MigrationsAssembly(typeof(POS_PrivateDbContext).Assembly.FullName);
+                npgsqlOptions.EnableRetryOnFailure(maxRetryCount: 3, maxRetryDelay: TimeSpan.FromSeconds(5), errorCodesToAdd: null);
             });
+            options.ConfigureWarnings(warnings => warnings.Ignore(RelationalEventId.PendingModelChangesWarning));
         });
 
         services.AddScoped<IUnitOfWork, UnitOfWork>();

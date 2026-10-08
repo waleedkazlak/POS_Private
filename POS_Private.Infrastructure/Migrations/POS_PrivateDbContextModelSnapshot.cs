@@ -1917,6 +1917,10 @@ namespace POS_Private.Infrastructure.Migrations
                         .HasColumnType("nvarchar(10)")
                         .HasDefaultValue("en");
 
+                    b.Property<string>("ProfilePictureUrl")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
                     b.Property<int>("RoleId")
                         .HasColumnType("int");
 

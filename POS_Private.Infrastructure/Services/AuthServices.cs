@@ -1,4 +1,4 @@
-﻿using System.IdentityModel.Tokens.Jwt;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
@@ -61,6 +61,7 @@ public class AuthenticationService : IAuthenticationService
                 Email = user.Email,
                 FullName = user.FullName,
                 PhoneNumber = user.PhoneNumber,
+                ProfilePictureUrl = user.ProfilePictureUrl,
                 RoleId = user.RoleId,
                 RoleName = user.Role?.Name ?? "User",
                 BranchId = user.BranchId,
@@ -112,6 +113,7 @@ public class AuthenticationService : IAuthenticationService
                 Email = user.Email,
                 FullName = user.FullName,
                 PhoneNumber = user.PhoneNumber,
+                ProfilePictureUrl = user.ProfilePictureUrl,
                 RoleId = user.RoleId,
                 RoleName = user.Role?.Name ?? "User",
                 BranchId = user.BranchId,

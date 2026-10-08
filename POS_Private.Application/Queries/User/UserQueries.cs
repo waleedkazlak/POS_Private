@@ -1,4 +1,4 @@
-﻿using POS_Private.Application.Common;
+using POS_Private.Application.Common;
 using POS_Private.Application.DTOs;
 using POS_Private.Application.Exceptions;
 using POS_Private.Domain.Entities;
@@ -28,6 +28,7 @@ public class GetUsersQueryHandler : IRequestHandler<GetUsersQuery, APIBaseRespon
             Email = u.Email,
             FullName = u.FullName,
             PhoneNumber = u.PhoneNumber,
+            ProfilePictureUrl = u.ProfilePictureUrl,
             RoleId = u.RoleId,
             RoleName = u.Role?.Name ?? string.Empty,
             BranchId = u.BranchId,
@@ -64,6 +65,7 @@ public class GetUserByIdQueryHandler : IRequestHandler<GetUserByIdQuery, APIBase
             Email = user.Email,
             FullName = user.FullName,
             PhoneNumber = user.PhoneNumber,
+            ProfilePictureUrl = user.ProfilePictureUrl,
             RoleId = user.RoleId,
             RoleName = user.Role?.Name ?? string.Empty,
             BranchId = user.BranchId,

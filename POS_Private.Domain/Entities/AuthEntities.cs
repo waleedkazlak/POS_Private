@@ -1,4 +1,4 @@
-﻿namespace POS_Private.Domain.Entities;
+namespace POS_Private.Domain.Entities;
 
 public class User : BaseEntity
 {
@@ -7,6 +7,7 @@ public class User : BaseEntity
     public string PasswordHash { get; set; } = null!;
     public string FullName { get; set; } = null!;
     public string? PhoneNumber { get; set; }
+    public string? ProfilePictureUrl { get; set; }
     
     public int RoleId { get; set; }
     public Role? Role { get; set; }

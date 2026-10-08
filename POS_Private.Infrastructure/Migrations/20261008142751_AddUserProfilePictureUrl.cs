@@ -1,0 +1,29 @@
+﻿using Microsoft.EntityFrameworkCore.Migrations;
+
+#nullable disable
+
+namespace POS_Private.Infrastructure.Migrations
+{
+    /// <inheritdoc />
+    public partial class AddUserProfilePictureUrl : Migration
+    {
+        /// <inheritdoc />
+        protected override void Up(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.AddColumn<string>(
+                name: "ProfilePictureUrl",
+                table: "Users",
+                type: "nvarchar(1000)",
+                maxLength: 1000,
+                nullable: true);
+        }
+
+        /// <inheritdoc />
+        protected override void Down(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.DropColumn(
+                name: "ProfilePictureUrl",
+                table: "Users");
+        }
+    }
+}

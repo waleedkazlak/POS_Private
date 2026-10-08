@@ -1,4 +1,4 @@
-﻿namespace POS_Private.Application.DTOs;
+namespace POS_Private.Application.DTOs;
 
 public class JwtSettingsDto
 {
@@ -41,12 +41,25 @@ public class UserDto
     public string Email { get; set; } = null!;
     public string FullName { get; set; } = null!;
     public string? PhoneNumber { get; set; }
+    public string? ProfilePictureUrl { get; set; }
     public int RoleId { get; set; }
     public string RoleName { get; set; } = null!;
     public int? BranchId { get; set; }
     public string? BranchName { get; set; }
     public string PreferredLanguage { get; set; } = "en";
     public bool IsActive { get; set; }
+}
+
+public class UpdateProfilePictureDto
+{
+    public string ProfilePictureUrl { get; set; } = null!;
+}
+
+public class ChangePasswordDto
+{
+    public string CurrentPassword { get; set; } = null!;
+    public string NewPassword { get; set; } = null!;
+    public string ConfirmNewPassword { get; set; } = null!;
 }
 
 public class CreateUserDto

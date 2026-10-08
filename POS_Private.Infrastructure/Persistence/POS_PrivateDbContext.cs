@@ -433,6 +433,7 @@ public class POS_PrivateDbContext : DbContext
             entity.Property(e => e.Email).IsRequired().HasMaxLength(150);
             entity.Property(e => e.PasswordHash).IsRequired().HasMaxLength(500);
             entity.Property(e => e.FullName).IsRequired().HasMaxLength(150);
+            entity.Property(e => e.ProfilePictureUrl).HasMaxLength(1000);
             entity.Property(e => e.PreferredLanguage).IsRequired().HasMaxLength(10).HasDefaultValue("en");
             entity.HasIndex(e => e.Username).IsUnique();
 

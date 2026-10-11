@@ -215,6 +215,14 @@ app.UseRequestLocalization(localizationOptions);
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.MapGet("/api/health", () => Results.Ok(new
+{
+    status = "Healthy",
+    timestamp = DateTime.UtcNow,
+    appName = "POS Private API",
+    version = "1.0.0"
+})).AllowAnonymous();
+
 app.MapControllers();
 
 var startupLogger = app.Services.GetRequiredService<ILogger<Program>>();

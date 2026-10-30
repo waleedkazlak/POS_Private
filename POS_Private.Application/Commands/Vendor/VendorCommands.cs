@@ -146,11 +146,13 @@ public class CreateVendorBillCommandHandler : IRequestHandler<CreateVendorBillCo
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICurrentUserService _currentUser;
+    private readonly IJournalPostingService _journalPostingService;
 
-    public CreateVendorBillCommandHandler(IUnitOfWork unitOfWork, ICurrentUserService currentUser)
+    public CreateVendorBillCommandHandler(IUnitOfWork unitOfWork, ICurrentUserService currentUser, IJournalPostingService journalPostingService)
     {
         _unitOfWork = unitOfWork;
         _currentUser = currentUser;
+        _journalPostingService = journalPostingService;
     }
 
     public async Task<APIBaseResponse<int>> Handle(CreateVendorBillCommand request, CancellationToken cancellationToken)
@@ -290,6 +292,9 @@ public class CreateVendorBillCommandHandler : IRequestHandler<CreateVendorBillCo
             }
         }
 
+        // Egyptian Standard: Real-time automated General Ledger posting
+        await _journalPostingService.PostVendorBillAsync(bill, vendor, _currentUser.UserId, cancellationToken);
+
         await _unitOfWork.SaveChangesAsync(cancellationToken);
         return APIBaseResponse<int>.Success(billId, "Vendor bill recorded successfully");
     }
@@ -301,11 +306,13 @@ public class CreateVendorPaymentCommandHandler : IRequestHandler<CreateVendorPay
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICurrentUserService _currentUser;
+    private readonly IJournalPostingService _journalPostingService;
 
-    public CreateVendorPaymentCommandHandler(IUnitOfWork unitOfWork, ICurrentUserService currentUser)
+    public CreateVendorPaymentCommandHandler(IUnitOfWork unitOfWork, ICurrentUserService currentUser, IJournalPostingService journalPostingService)
     {
         _unitOfWork = unitOfWork;
         _currentUser = currentUser;
+        _journalPostingService = journalPostingService;
     }
 
     public async Task<APIBaseResponse<int>> Handle(CreateVendorPaymentCommand request, CancellationToken cancellationToken)
@@ -371,6 +378,9 @@ public class CreateVendorPaymentCommandHandler : IRequestHandler<CreateVendorPay
             CreatedByUserId = _currentUser.UserId
         };
         await _unitOfWork.VendorTransactions.AddAsync(tx);
+
+        // Egyptian Standard: Real-time automated General Ledger posting
+        await _journalPostingService.PostVendorPaymentAsync(payment, vendor, _currentUser.UserId, cancellationToken);
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
         return APIBaseResponse<int>.Success(paymentId, "Vendor payment recorded successfully");

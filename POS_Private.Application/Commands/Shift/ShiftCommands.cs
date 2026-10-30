@@ -1,4 +1,4 @@
-﻿using POS_Private.Application.DTOs;
+using POS_Private.Application.DTOs;
 using POS_Private.Application.Exceptions;
 using POS_Private.Application.Services;
 using POS_Private.Domain.Entities;
@@ -63,10 +63,14 @@ public record CloseShiftCommand(CloseShiftDto Dto) : IRequest<APIBaseResponse<Sh
 public class CloseShiftCommandHandler : IRequestHandler<CloseShiftCommand, APIBaseResponse<ShiftSummaryReportDto>>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ICurrentUserService _currentUser;
+    private readonly IJournalPostingService _journalPostingService;
 
-    public CloseShiftCommandHandler(IUnitOfWork unitOfWork)
+    public CloseShiftCommandHandler(IUnitOfWork unitOfWork, ICurrentUserService currentUser, IJournalPostingService journalPostingService)
     {
         _unitOfWork = unitOfWork;
+        _currentUser = currentUser;
+        _journalPostingService = journalPostingService;
     }
 
     public async Task<APIBaseResponse<ShiftSummaryReportDto>> Handle(CloseShiftCommand request, CancellationToken cancellationToken)
@@ -80,19 +84,27 @@ public class CloseShiftCommandHandler : IRequestHandler<CloseShiftCommand, APIBa
 
         var completedInvoices = shift.Invoices.Where(i => i.Status == InvoiceStatus.Completed).ToList();
         
-        var totalSales = completedInvoices.Where(i => i.InvoiceType == InvoiceType.Sale).Sum(i => i.TotalAmount);
-        var totalReturns = completedInvoices.Where(i => i.InvoiceType == InvoiceType.Return).Sum(i => i.TotalAmount);
+        var saleInvoices = completedInvoices.Where(i => i.InvoiceType == InvoiceType.Sale).ToList();
+        var returnInvoices = completedInvoices.Where(i => i.InvoiceType == InvoiceType.Return).ToList();
+
+        var totalSales = saleInvoices.Sum(i => i.TotalAmount);
+        var totalReturns = returnInvoices.Sum(i => i.TotalAmount);
         
-        var allPayments = completedInvoices.SelectMany(i => i.Payments).ToList();
-        var cashSales = allPayments.Where(p => p.PaymentMethod == PaymentMethod.Cash).Sum(p => p.Amount);
-        var visaSales = allPayments.Where(p => p.PaymentMethod == PaymentMethod.Visa || p.PaymentMethod == PaymentMethod.MasterCard).Sum(p => p.Amount);
-        var instaPaySales = allPayments.Where(p => p.PaymentMethod == PaymentMethod.InstaPay).Sum(p => p.Amount);
-        var walletSales = allPayments.Where(p => p.PaymentMethod == PaymentMethod.VodafoneCash || p.PaymentMethod == PaymentMethod.OrangeMoney || p.PaymentMethod == PaymentMethod.EtisalatCash).Sum(p => p.Amount);
+        var salePayments = saleInvoices.SelectMany(i => i.Payments).ToList();
+        var returnPayments = returnInvoices.SelectMany(i => i.Payments).ToList();
+
+        var cashSales = salePayments.Where(p => p.PaymentMethod == PaymentMethod.Cash).Sum(p => p.Amount);
+        var cashReturns = returnPayments.Where(p => p.PaymentMethod == PaymentMethod.Cash).Sum(p => p.Amount);
+        var netCashSales = cashSales - cashReturns;
+
+        var visaSales = salePayments.Where(p => p.PaymentMethod == PaymentMethod.Visa || p.PaymentMethod == PaymentMethod.MasterCard).Sum(p => p.Amount);
+        var instaPaySales = salePayments.Where(p => p.PaymentMethod == PaymentMethod.InstaPay).Sum(p => p.Amount);
+        var walletSales = salePayments.Where(p => p.PaymentMethod == PaymentMethod.VodafoneCash || p.PaymentMethod == PaymentMethod.OrangeMoney || p.PaymentMethod == PaymentMethod.EtisalatCash).Sum(p => p.Amount);
 
         var cashInTotal = shift.Transactions.Where(t => t.Type == ShiftTransactionType.CashIn).Sum(t => t.Amount);
         var cashOutTotal = shift.Transactions.Where(t => t.Type == ShiftTransactionType.CashOut || t.Type == ShiftTransactionType.Drop).Sum(t => t.Amount);
 
-        var expectedCash = shift.StartingCash + cashSales + cashInTotal - cashOutTotal;
+        var expectedCash = shift.StartingCash + netCashSales + cashInTotal - cashOutTotal;
         var diff = request.Dto.ActualCash - expectedCash;
 
         shift.ClosedAt = DateTime.UtcNow;
@@ -105,6 +117,16 @@ public class CloseShiftCommandHandler : IRequestHandler<CloseShiftCommand, APIBa
             : shift.Notes;
 
         await _unitOfWork.CashierShifts.UpdateAsync(shift);
+
+        // Egyptian Retail POS Standard: Post consolidated Z-Report daily sales summary to General Ledger
+        await _journalPostingService.PostShiftSalesSummaryAsync(
+            shift, 
+            completedInvoices, 
+            request.Dto.ActualCash, 
+            diff, 
+            _currentUser.UserId, 
+            cancellationToken);
+
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         var report = new ShiftSummaryReportDto
@@ -119,6 +141,7 @@ public class CloseShiftCommandHandler : IRequestHandler<CloseShiftCommand, APIBa
             TotalSales = totalSales,
             TotalReturns = totalReturns,
             TotalCashSales = cashSales,
+            TotalCashReturns = cashReturns,
             TotalVisaSales = visaSales,
             TotalInstaPaySales = instaPaySales,
             TotalWalletSales = walletSales,
@@ -127,7 +150,7 @@ public class CloseShiftCommandHandler : IRequestHandler<CloseShiftCommand, APIBa
             ActualDrawerCash = shift.ActualCash,
             Difference = diff,
             InvoicesCount = completedInvoices.Count,
-            ItemsSoldCount = completedInvoices.SelectMany(i => i.Lines).Sum(l => l.Quantity)
+            ItemsSoldCount = saleInvoices.SelectMany(i => i.Lines).Sum(l => l.Quantity)
         };
 
         return APIBaseResponse<ShiftSummaryReportDto>.Success(report, "Shift closed and reconciled successfully (Z-Report generated)");

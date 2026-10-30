@@ -3,4 +3,5 @@
   <Project Path="POS_Private.Domain/POS_Private.Domain.csproj" />
   <Project Path="POS_Private.Infrastructure/POS_Private.Infrastructure.csproj" />
   <Project Path="POS_Private.Presentation/POS_Private.Presentation.csproj" />
+  <Project Path="POS_Private.Tests/POS_Private.Tests.csproj" />
 </Solution>

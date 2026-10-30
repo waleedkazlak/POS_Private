@@ -1,4 +1,4 @@
-﻿using POS_Private.Domain.Enums;
+using POS_Private.Domain.Enums;
 
 namespace POS_Private.Application.DTOs;
 
@@ -120,12 +120,14 @@ public class ShiftSummaryReportDto
     public decimal TotalReturns { get; set; }
     public decimal NetSales => TotalSales - TotalReturns;
     public decimal TotalCashSales { get; set; }
+    public decimal TotalCashReturns { get; set; }
+    public decimal NetCashSales => TotalCashSales - TotalCashReturns;
     public decimal TotalVisaSales { get; set; }
     public decimal TotalInstaPaySales { get; set; }
     public decimal TotalWalletSales { get; set; }
     public decimal CashInTotal { get; set; }
     public decimal CashOutTotal { get; set; }
-    public decimal ExpectedDrawerCash => StartingCash + TotalCashSales + CashInTotal - CashOutTotal;
+    public decimal ExpectedDrawerCash => StartingCash + NetCashSales + CashInTotal - CashOutTotal;
     public decimal? ActualDrawerCash { get; set; }
     public decimal? Difference { get; set; }
     public int InvoicesCount { get; set; }

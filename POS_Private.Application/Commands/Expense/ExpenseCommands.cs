@@ -51,11 +51,13 @@ public class CreateExpenseCommandHandler : IRequestHandler<CreateExpenseCommand,
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICurrentUserService _currentUser;
+    private readonly IJournalPostingService _journalPostingService;
 
-    public CreateExpenseCommandHandler(IUnitOfWork unitOfWork, ICurrentUserService currentUser)
+    public CreateExpenseCommandHandler(IUnitOfWork unitOfWork, ICurrentUserService currentUser, IJournalPostingService journalPostingService)
     {
         _unitOfWork = unitOfWork;
         _currentUser = currentUser;
+        _journalPostingService = journalPostingService;
     }
 
     public async Task<APIBaseResponse<int>> Handle(CreateExpenseCommand request, CancellationToken cancellationToken)
@@ -70,7 +72,6 @@ public class CreateExpenseCommandHandler : IRequestHandler<CreateExpenseCommand,
         var expenseNumber = await _unitOfWork.Expenses.GenerateNextExpenseNumberAsync();
 
         int? linkedShiftId = request.Dto.ShiftId;
-        int? shiftTransactionId = null;
 
         // If drawn from cashier drawer, verify active shift and log ShiftTransaction CashOut
         if (request.Dto.IsDrawerExpense)
@@ -121,6 +122,10 @@ public class CreateExpenseCommandHandler : IRequestHandler<CreateExpenseCommand,
         };
 
         var id = await _unitOfWork.Expenses.AddAsync(expense);
+
+        // Egyptian Standard: Post automated General Ledger entry for operational expense
+        await _journalPostingService.PostExpenseAsync(expense, category, _currentUser.UserId, cancellationToken);
+
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return APIBaseResponse<int>.Success(id, "Expense recorded successfully");

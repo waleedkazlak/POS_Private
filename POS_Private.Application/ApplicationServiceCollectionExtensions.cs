@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+using System.Reflection;
 using POS_Private.Application.Behaviors;
 using FluentValidation;
 using MediatR;
@@ -20,6 +20,8 @@ public static class ApplicationServiceCollectionExtensions
         });
 
         services.AddValidatorsFromAssembly(assembly);
+
+        services.AddScoped<Services.IJournalPostingService, Services.JournalPostingService>();
 
         return services;
     }

@@ -3,7 +3,7 @@ name: Build and Deploy to Azure Container App
 on:
   push:
     branches:
-      - main  # If your default branch is 'master', change this to 'master'
+      - PostgreSQL  # If your default branch is 'master', change this to 'master'
 
 permissions:
   contents: read

@@ -49,3 +49,6 @@ jobs:
           resourceGroup: DefaultResourceGroup-CAU
           imageToDeploy: ${{ env.IMAGE_NAME_LOWER }}
           targetPort: 8080
+	  acrServer: ghcr.io
+          acrUsername: ${{ github.actor }}
+          acrPassword: ${{ secrets.GITHUB_TOKEN }}
